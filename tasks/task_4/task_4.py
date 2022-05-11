@@ -1,7 +1,7 @@
 import re
 import time
 
-from typing import Any
+from typing import Any, List
 from exception import GiveUp, NotCorrectInput
 
 def clean_board() -> list:
@@ -29,7 +29,7 @@ def check_move(board: list, coor: tuple) -> bool:
 def move(board: list, coor: list) -> list:
     pass
 
-def transform_coor(line: str) -> list:
+def transform_coor(line: str) -> List[list, list]:
     coor_x = {
         'a': 0,
         'b': 1,
@@ -95,6 +95,18 @@ if __name__ == "__main__":
             break
 
         coor = transform_coor(coor)
+
+        try:
+            if not check_move(coor):
+                raise NotCorrectInput
+
+        except NotCorrectInput:
+            print('Неверный ход')
+            time.sleep(1)
+            print('Попробуйте ещё раз')
+            continue
+
+        move(coor)
 
         color += 1
         print_board(board)
