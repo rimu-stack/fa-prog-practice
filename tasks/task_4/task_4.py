@@ -23,17 +23,58 @@ def print_board(board: list) -> None:
     
     print(result)
 
-def check_move(board: list, coor: tuple) -> bool:
+def check_move(board: list, coor: list, figures: list) -> bool:
     figure = board[coor[0][1]][coor[0][0]]
+    end_point = board[coor[1][1]][coor[1][0]]
 
     if figure == '*':
         print('Поле не может ходить самостоятельно!')
         return False
 
+    if figure not in figures:
+        print('Вы не можете ходить за противника!')
+        return False
     
+    if end_point in figures:
+        print('Вы не можете пойти на эту клетку, там стоит другая Ваша фигура')
+        return False
+    
+    figures = [i.lower() for i in figures]
+    
+    dy = abs(coor[0][1] - coor[1][1])
+    dx = abs(coor[0][0] - coor[1][0])
+
+    if figure in ['K', 'k']:
+        if all([dx == 1, dy == 1]):
+                return True
+    
+    if figure in ['N', 'n']:
+        if any([all([dx == 1, dy == 2]),
+                all([dx == 2, dy == 1])]):
+            return True
+    
+    if figure in ['R', 'r']:
+        if any([coor[0][1] == coor[1][1],
+                coor[0][0] == coor[1][0]]):
+            return True
+    
+    if figure in ['B', 'b']:
+        if dx == dy:
+            return True
+    
+    if figure in ['Q', 'q']:
+        if any([coor[0][1] == coor[1][1],
+                coor[0][0] == coor[1][0],
+                dx == dy]):
+            return True
+    
+    return False
 
 def move(board: list, coor: list) -> list:
-    pass
+    board[coor[1][1]][coor[1][0]] = str(board[coor[0][1]][coor[0][0]])
+    board[coor[0][1]][coor[0][0]] = '*'
+
+    return board
 
 def transform_coor(line: str) -> list:
     coor_x = {
@@ -77,8 +118,11 @@ if __name__ == "__main__":
     while True:
         if color % 2 == 0:
             player = 'чёрных'
+            figures = ['r', 'n', 'b', 'k', 'q', 'p']
+            
         if color % 2 != 0:
             player = 'белых'
+            figures = ['R', 'N', 'B', 'K', 'Q', 'P']
 
         try:
             coor = input(f"Ход {player}: ").lower()
@@ -103,7 +147,7 @@ if __name__ == "__main__":
         coor = transform_coor(coor)
 
         try:
-            if not check_move(board, coor):
+            if not check_move(board, coor, figures):
                 raise NotCorrectInput
 
         except NotCorrectInput:
@@ -112,9 +156,11 @@ if __name__ == "__main__":
             print('Попробуйте ещё раз')
             continue
 
-        move(coor)
+        move(board, coor)
 
         color += 1
         print_board(board)
 
     print('Матч завершён!')
+
+# from task_4 import clean_board, load_figures_on_the_board, transform_coor, check_move
