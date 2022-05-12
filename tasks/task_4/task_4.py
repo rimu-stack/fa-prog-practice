@@ -8,7 +8,7 @@ def clean_board() -> list:
     return [["*"] * 8 for i in range(8)]
 
 def load_figures_on_the_board(board: list) -> list:
-    board[0] = ['R', 'K', 'B', 'K', 'Q', 'B', 'K', 'R']
+    board[0] = ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R']
     board[1] = ['P' for i in board[1]]
     board[6] = ['p' for i in board[6]]
     board[7] = [str(i.lower())for i in board[0]]
@@ -24,12 +24,18 @@ def print_board(board: list) -> None:
     print(result)
 
 def check_move(board: list, coor: tuple) -> bool:
-    pass
+    figure = board[coor[0][1]][coor[0][0]]
+
+    if figure == '*':
+        print('Поле не может ходить самостоятельно!')
+        return False
+
+    
 
 def move(board: list, coor: list) -> list:
     pass
 
-def transform_coor(line: str) -> List[list, list]:
+def transform_coor(line: str) -> list:
     coor_x = {
         'a': 0,
         'b': 1,
@@ -42,14 +48,14 @@ def transform_coor(line: str) -> List[list, list]:
     }
 
     coor_y = {
-        '1': 0,
-        '2': 1,
-        '3': 2,
-        '4': 3,
-        '5': 4,
-        '6': 5,
-        '7': 6,
-        '8': 7
+        '1': 7,
+        '2': 6,
+        '3': 5,
+        '4': 4,
+        '5': 3,
+        '6': 2,
+        '7': 1,
+        '8': 0
     }
 
     return [[coor_x[line[0]], coor_y[line[1]]], 
@@ -97,7 +103,7 @@ if __name__ == "__main__":
         coor = transform_coor(coor)
 
         try:
-            if not check_move(coor):
+            if not check_move(board, coor):
                 raise NotCorrectInput
 
         except NotCorrectInput:
