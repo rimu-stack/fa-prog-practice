@@ -2,13 +2,13 @@ import re
 import time
 
 from typing import Any, List
-from exception import GiveUp, NotCorrectInput
+from exception import GiveUp, NotCorrectInput, FigureOnWay
 
 def clean_board() -> list:
     return [["*"] * 8 for i in range(8)]
 
 def load_figures_on_the_board(board: list) -> list:
-    board[0] = ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R']
+    board[0] = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
     board[1] = ['P' for i in board[1]]
     board[6] = ['p' for i in board[6]]
     board[7] = [str(i.lower())for i in board[0]]
@@ -16,14 +16,17 @@ def load_figures_on_the_board(board: list) -> list:
     return board
 
 def print_board(board: list) -> None:
-    result = ''
+    result = '  ABCDEFGH' + '\n'
+    i = 8
 
     for line in range(len(board)):
-        result += "".join(board[line]) + '\n'
+        result += f"{i} " + "".join(board[line]) + f" {i}" + '\n'
+        i -= 1
     
+    result += '  ABCDEFGH'
     print(result)
 
-def check_move(board: list, coor: list, figures: list) -> bool:
+def check_move_figure(board: list, coor: list, figures: list) -> bool:
     figure = board[coor[0][1]][coor[0][0]]
     end_point = board[coor[1][1]][coor[1][0]]
 
@@ -46,7 +49,7 @@ def check_move(board: list, coor: list, figures: list) -> bool:
 
     if figure in ['K', 'k']:
         if all([dx == 1, dy == 1]):
-                return True
+            return True
     
     if figure in ['N', 'n']:
         if any([all([dx == 1, dy == 2]),
@@ -68,7 +71,52 @@ def check_move(board: list, coor: list, figures: list) -> bool:
                 dx == dy]):
             return True
     
+    if figure in ['P', 'p']:
+        if all([dx == dy, end_point in figures, 
+                coor[0][1] - coor[1][1] == 1,
+                coor[0][0] - coor[1][0] == 1]):
+            return True
+
+        if figure == 'p':
+            if coor[0][1] == 6:
+                if all([dy == 2, dx == 0]):
+                    return True
+            if all([coor[0][1] - coor[1][1] == 1, dy == 0]):
+                return True
+        
+        if figure == 'P':
+            if coor[0][1] == 1:
+                if all([dy == 2, dx == 0]):
+                    return True
+            if all([coor[0][1] - coor[1][1] == -1, dy == 0]):
+                return True
+    
+    print('Не предусмотрел')
     return False
+
+def check_way(board: list, coor: list, figures: list) -> bool:
+    figure = board[coor[0][1]][coor[0][0]]
+
+    if figure is ['N', 'n']:
+        return True
+    
+    while True:
+        if all([coor[0][0] == coor[1][0], coor[0][1] == coor[1][1]]):
+            return True
+
+        if coor[0][1] > coor[1][1]:
+            coor[0][1] -= 1
+        if coor[0][1] < coor[1][1]:
+            coor[0][1] += 1
+        if coor[0][0] > coor[1][0]:
+            coor[0][1] -= 1
+        if coor[0][0] > coor[1][0]:
+            coor[0][1] -= 1
+        
+        if figure is '*':
+            continue
+
+        return False
 
 def move(board: list, coor: list) -> list:
     board[coor[1][1]][coor[1][0]] = str(board[coor[0][1]][coor[0][0]])
@@ -104,10 +152,10 @@ def transform_coor(line: str) -> list:
 
 def check_coor(coor: str) -> bool:
     return any([len(coor) != 4, 
-                    not re.match("[a-h]", coor[0]),
-                    not re.match("[1-8]", coor[1]),
-                    not re.match("[a-h]", coor[2]),
-                    not re.match("[1-8]", coor[3])])
+                not re.match("[a-h]", coor[0]),
+                not re.match("[1-8]", coor[1]),
+                not re.match("[a-h]", coor[2]),
+                not re.match("[1-8]", coor[3])])
 
 if __name__ == "__main__":
     board = list(load_figures_on_the_board(clean_board()))    
@@ -147,11 +195,20 @@ if __name__ == "__main__":
         coor = transform_coor(coor)
 
         try:
-            if not check_move(board, coor, figures):
+            if not check_move_figure(board, coor, figures):
                 raise NotCorrectInput
+
+            if not check_way(board, coor, figures):
+                raise FigureOnWay
 
         except NotCorrectInput:
             print('Неверный ход')
+            time.sleep(1)
+            print('Попробуйте ещё раз')
+            continue
+
+        except FigureOnWay:
+            print('Неверный ход. На пути союзник')
             time.sleep(1)
             print('Попробуйте ещё раз')
             continue
