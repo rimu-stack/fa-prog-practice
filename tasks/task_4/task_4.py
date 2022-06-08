@@ -1,8 +1,10 @@
+import copy
 import re
 import time
 
 from typing import Any, List
-from exception import GiveUp, NotCorrectInput, FigureOnWay
+from exception import GiveUp, NotCorrectInput, FigureOnWay, SaveInFile
+from pprint import pprint
 
 def clean_board() -> list:
     return [["*"] * 8 for i in range(8)]
@@ -91,7 +93,6 @@ def check_move_figure(board: list, coor: list, figures: list) -> bool:
             if all([coor[0][1] - coor[1][1] == -1, dy == 0]):
                 return True
     
-    print('Не предусмотрел')
     return False
 
 def check_way(board: list, coor: list, figures: list) -> bool:
@@ -100,25 +101,28 @@ def check_way(board: list, coor: list, figures: list) -> bool:
     if figure is ['N', 'n']:
         return True
     
+    x = coor[0][1]
+    y = coor[0][0]
+    
     while True:
-        if all([coor[0][0] == coor[1][0], coor[0][1] == coor[1][1]]):
+        if all([y == coor[1][0], x == coor[1][1]]):
             return True
 
-        if coor[0][1] > coor[1][1]:
-            coor[0][1] -= 1
-        if coor[0][1] < coor[1][1]:
-            coor[0][1] += 1
-        if coor[0][0] > coor[1][0]:
-            coor[0][1] -= 1
-        if coor[0][0] > coor[1][0]:
-            coor[0][1] -= 1
+        if x > coor[1][1]:
+            x -= 1
+        if x < coor[1][1]:
+            x += 1
+        if y > coor[1][0]:
+            y -= 1
+        if y < coor[1][0]:
+            y += 1
         
-        if figure is '*':
+        if board[x][y] == '*':
             continue
 
         return False
 
-def move(board: list, coor: list) -> list:
+def move_figure(board: list, coor: list) -> list:
     board[coor[1][1]][coor[1][0]] = str(board[coor[0][1]][coor[0][0]])
     board[coor[0][1]][coor[0][0]] = '*'
 
@@ -157,9 +161,31 @@ def check_coor(coor: str) -> bool:
                 not re.match("[a-h]", coor[2]),
                 not re.match("[1-8]", coor[3])])
 
+def change_p(board: list, coor: list, figure: str) -> list:
+    board[coor[1]][coor[0]] = str(figure)
+    return board
+
+def input_new_p(figures: list) -> str:
+    while True:
+        figure = input('Введите фигуру заместо пешки: ')
+
+        if all([len(figure) == 1,
+                figure in figures]):
+            return figure
+        
+        print('Вы ввели некоректные данные, попробуйте снова')
+
+def save_in_txt(move: str, history: dict) -> None:
+    name = str(move.split(' ')[2])
+
+    with open(f"{name}.txt", 'a+') as file:
+        for step in history.values():
+            file.write(step['move'] + '\n')
+
 if __name__ == "__main__":
     board = list(load_figures_on_the_board(clean_board()))    
     color = 1
+    history = {}
 
     print_board(board)
     
@@ -173,12 +199,16 @@ if __name__ == "__main__":
             figures = ['R', 'N', 'B', 'K', 'Q', 'P']
 
         try:
-            coor = input(f"Ход {player}: ").lower()
+            move = input(f"Ход {player}: ").lower()
             
-            if coor == "give up":
+            if move == "give up":
                 raise GiveUp
+            
+            if move.startswith('save in'):
+                save_in_txt(move, history)
+                raise SaveInFile
 
-            if check_coor(coor):
+            if check_coor(move):
                 raise NotCorrectInput
         
         except NotCorrectInput:
@@ -192,7 +222,12 @@ if __name__ == "__main__":
             time.sleep(1)
             break
 
-        coor = transform_coor(coor)
+        except SaveInFile:
+            print('Загрузка завершена')
+            time.sleep(1)
+            continue
+
+        coor = transform_coor(move)
 
         try:
             if not check_move_figure(board, coor, figures):
@@ -213,11 +248,22 @@ if __name__ == "__main__":
             print('Попробуйте ещё раз')
             continue
 
-        move(board, coor)
+        board = move_figure(board, coor)
 
+        if 'p' in board[0]:
+            new_figure = input_new_p(figures)
+            board = change_p(board, [0, board[0].index('p')], new_figure)
+        if 'P' in board[7]:
+            new_figure = input_new_p(figures)
+            board = change_p(board, [7, board[7].index('P')], new_figure)
+
+        step = str(color)
+        history[step] = {
+            'move': move, 
+            'board': copy.deepcopy(board)
+        }
         color += 1
         print_board(board)
 
+    pprint(history)
     print('Матч завершён!')
-
-# from task_4 import clean_board, load_figures_on_the_board, transform_coor, check_move

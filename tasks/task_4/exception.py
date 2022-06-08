@@ -9,3 +9,7 @@ class NotCorrectInput(Exception):
 class FigureOnWay(Exception):
     """Вызывается, когда на пути стоит препятствие в виде союзной фигуры"""
     pass
+
+class SaveInFile(Exception):
+    """Вызывается, когда игрок сохраняет в файл историю"""
+    pass
